@@ -46,6 +46,15 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:var(--light-bg);color:va
 .attn-dot{width:8px;height:8px;border-radius:50%;margin-right:6px}
 .attn-item{flex:1;min-width:0} .attn-due{flex:none;color:#b06a1f;font-weight:700;font-size:12px}
 .attn-more{padding-top:8px;font-size:12px;color:var(--orange);font-weight:700;cursor:pointer}
+.mboat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.mboat{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--border);border-left:6px solid #ccc;border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s,box-shadow .15s}
+.mboat:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(16,41,63,.12)}
+.mboat.mb-red{border-left-color:#d64545} .mboat.mb-amber{border-left-color:#E8912A} .mboat.mb-green{border-left-color:#3a9a4a} .mboat.mb-grey{border-left-color:#9aa5ad}
+.mboat-badge{flex:none;width:42px;height:42px;border-radius:50%;color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center}
+.mboat-main{min-width:0}
+.mboat-name{font-weight:800;font-size:14px;display:flex;align-items:center}
+.mboat-dot{width:10px;height:10px;border-radius:50%;margin-right:7px;flex:none}
+.mboat-line{font-size:11.5px;color:var(--text-light);margin-top:2px}
 .vcard-hero{width:100%;height:110px;overflow:hidden;background:linear-gradient(135deg,var(--navy),var(--navy-mid));}
 .vcard-hero img{width:100%;height:100%;object-fit:cover;display:block;}
 .vcard:hover{box-shadow:0 6px 30px rgba(26,43,92,0.16);transform:translateY(-2px);}
@@ -222,9 +231,12 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:var(--light-bg);color:va
 
   <div id="tab-maint" class="tab-panel">
     <div class="sec-title">Scheduled Maintenance</div>
+    <div id="maint-attn" style="margin-bottom:16px;"></div>
+    <div class="sec-sub" style="font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-light);font-weight:700;margin:0 0 10px;">The fleet — tap a boat for its schedule</div>
+    <div id="maint-boats" style="margin-bottom:22px;"></div>
     <div id="maint-summary" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;"></div>
     <div id="maint-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>
-    <div class="tbl-wrap"><div class="tbl-scroll">
+    <div class="tbl-wrap" id="maint-table"><div class="tbl-scroll">
       <table class="stbl"><thead><tr>
         <th>Vessel</th><th>Category</th><th>Item</th><th>Interval</th>
         <th>Last Done</th><th>Next Due</th><th>Status</th><th>Notes</th>
@@ -966,19 +978,48 @@ function applyMaintColours() {
   }
 }
 function renderAttention() {
-  var grid = document.getElementById("fleet-grid"); if (!grid) return;
-  var attn = document.getElementById("fleet-attn");
-  if (!attn) { attn = document.createElement("div"); attn.id = "fleet-attn"; attn.style.marginBottom = "18px"; grid.parentNode.insertBefore(attn, grid); }
+  var attn = document.getElementById("maint-attn"); if (!attn) return;
   var od = maintItems.filter(function(m) { return m.status === "OVERDUE"; });
   od.sort(function(a, b) { var da = maintDate(a.nextDue), db = maintDate(b.nextDue); return (da && db) ? da - db : 0; });
   if (!od.length) { attn.innerHTML = "<div class=\"attn-banner ok\">✓ All maintenance up to date across the fleet</div>"; return; }
-  var rows = od.slice(0, 6).map(function(m) {
-    return "<div class=\"attn-row\" onclick=\"maintFilter='" + (m.vessel || "").replace(/'/g, "\\'") + "';maintStatusFilter='OVERDUE';renderMaintenance();switchTab('maint',document.querySelectorAll('.tab-btn')[4]);\">" +
+  var rows = od.slice(0, 8).map(function(m) {
+    return "<div class=\"attn-row\" onclick=\"maintFilter='" + (m.vessel || "").replace(/'/g, "\\'") + "';maintStatusFilter='OVERDUE';renderMaintenance();document.getElementById('maint-table').scrollIntoView({behavior:'smooth',block:'start'});\">" +
       "<span class=\"attn-boat\" style=\"border-color:" + boatColour(m.vessel) + "\"><span class=\"attn-dot\" style=\"background:" + boatColour(m.vessel) + "\"></span>" + m.vessel + "</span>" +
       "<span class=\"attn-item\">" + esc(m.item) + "</span><span class=\"attn-due\">due " + esc(m.nextDue) + "</span></div>";
   }).join("");
-  var more = od.length > 6 ? "<div class=\"attn-more\" onclick=\"switchTab('maint',document.querySelectorAll('.tab-btn')[4])\">+" + (od.length - 6) + " more — open the Maintenance tab</div>" : "";
+  var more = od.length > 8 ? "<div class=\"attn-more\">+" + (od.length - 8) + " more below in the table</div>" : "";
   attn.innerHTML = "<div class=\"attn-banner\"><div class=\"attn-hd\">⚠ " + od.length + " service" + (od.length > 1 ? "s" : "") + " overdue across the fleet</div>" + rows + more + "</div>";
+}
+
+function renderMaintBoards() {
+  var host = document.getElementById("maint-boats"); if (!host) return;
+  var order = ["everywhen","andiamo","ara roa","sea ya","sheer bliss","at3","ss88 - krystyna"];
+  var names = [];
+  maintItems.forEach(function(m) { if (m.vessel && names.indexOf(m.vessel) < 0) names.push(m.vessel); });
+  names.sort(function(a, b) {
+    var ia = order.indexOf(a.toLowerCase().trim()); if (ia < 0) ia = 99;
+    var ib = order.indexOf(b.toLowerCase().trim()); if (ib < 0) ib = 99;
+    return ia - ib;
+  });
+  var cards = names.map(function(n) {
+    var c = { "OVERDUE":0, "DUE ≤30 DAYS":0, "UPCOMING":0, "OK":0 };
+    maintItems.forEach(function(m) { if (m.vessel === n && c.hasOwnProperty(m.status)) c[m.status]++; });
+    var over = c["OVERDUE"], soon = c["DUE ≤30 DAYS"], up = c["UPCOMING"], ok = c["OK"];
+    var state = over ? "red" : soon ? "amber" : (ok || up) ? "green" : "grey";
+    var badgeBg = over ? "#d64545" : soon ? "#E8912A" : (ok || up) ? "#3a9a4a" : "#9aa5ad";
+    var big = over ? String(over) : soon ? String(soon) : "✓";
+    var parts = [];
+    if (over) parts.push("<b style=\"color:#c0392b\">" + over + " overdue</b>");
+    if (soon) parts.push(soon + " due ≤30d");
+    if (up) parts.push(up + " upcoming");
+    if (ok) parts.push(ok + " ok");
+    var line = parts.join(" · ") || "no dated items yet";
+    return "<div class=\"mboat mb-" + state + "\" onclick=\"maintFilter='" + n.replace(/'/g, "\\'") + "';maintStatusFilter='All';renderMaintenance();document.getElementById('maint-table').scrollIntoView({behavior:'smooth',block:'start'});\">" +
+      "<div class=\"mboat-badge\" style=\"background:" + badgeBg + "\">" + big + "</div>" +
+      "<div class=\"mboat-main\"><div class=\"mboat-name\"><span class=\"mboat-dot\" style=\"background:" + boatColour(n) + "\"></span>" + n + "</div>" +
+      "<div class=\"mboat-line\">" + line + "</div></div></div>";
+  }).join("");
+  host.innerHTML = "<div class=\"mboat-grid\">" + cards + "</div>";
 }
 
 function loadMaintenance() {
@@ -987,6 +1028,7 @@ function loadMaintenance() {
     .then(function(j) {
       maintItems = j.items || [];
       renderMaintenance();
+      renderMaintBoards();
       applyMaintColours();
       renderAttention();
       // If a vessel panel is already open, rebuild it so its
