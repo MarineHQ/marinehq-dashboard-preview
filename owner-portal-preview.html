@@ -1329,7 +1329,7 @@ function renderOwnerMaint(name){
   var v=null; for(var i=0;i<map.length;i++){ if(n.indexOf(map[i][0])>-1){ v=map[i][1]; break; } }
   if(!v){ wrap.style.display="none"; return; }
   document.getElementById("maint-owner").innerHTML=
-    '<iframe src="./fleet-maintenance.html?view=owner&vessel='+encodeURIComponent(v)+'&embed=1" '+
+    '<iframe src="./fleet-maintenance.html?view=owner&vessel='+encodeURIComponent(v)+'&embed=1&lock=1" '+
     'title="Your care schedule" loading="lazy" '+
     'style="width:100%;height:940px;min-height:600px;border:1.5px solid var(--border);border-radius:12px;background:#fff;display:block"></iframe>';
   wrap.style.display="block";

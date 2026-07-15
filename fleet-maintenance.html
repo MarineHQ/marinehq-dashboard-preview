@@ -8,6 +8,9 @@
 body{font-family:-apple-system,Segoe UI,Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg)}
 img.banner{display:block;width:100%;height:auto}
 body.embed img.banner{display:none}body.embed .wrap{padding-top:8px}body.embed{background:#fff}
+/* locked = single-vessel owner embed (client portal): no fleet toggle, no vessel picker */
+body.locked .vtoggle,body.locked .controls{display:none!important}
+body.locked .head{border-bottom:0;padding-top:6px;margin-bottom:2px}
 .wrap{max-width:1060px;margin:0 auto;padding:0 15px 46px}
 .head{padding:16px 0 12px;border-bottom:3px solid var(--navy);margin-bottom:12px}
 .hrow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
@@ -93,7 +96,8 @@ var BADGE={"OVERDUE":"od","DUE ≤30 DAYS":"ds","UPCOMING":"up","OK":"ok","TBC":
 var view="fleet", vessel=VNAMES[0], stF="all", fqF="all", q="";
 try{var sp=new URLSearchParams(location.search);var pv=sp.get("view");if(pv=="owner"||pv=="fleet")view=pv;
 var ps=sp.get("vessel");if(ps&&VNAMES.indexOf(ps)>=0)vessel=ps;else if(sp.get("vessel")=="all")vessel="all";
-if(sp.get("embed"))document.body.classList.add("embed");}catch(e){}
+if(sp.get("embed"))document.body.classList.add("embed");
+if(sp.get("lock")){document.body.classList.add("locked");view="owner";if(vessel=="all")vessel=VNAMES[0];}}catch(e){}
 function esc(s){return (s==null?"":String(s)).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
 // vessel dropdown
 var vs=document.getElementById("vsel");
