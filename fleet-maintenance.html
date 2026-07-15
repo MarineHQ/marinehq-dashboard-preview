@@ -190,7 +190,7 @@ function renderOwner(){
     var word=(ownerTab=="Annually")?"yearly":ownerTab.toLowerCase();
     // clickable filter pills (with live counts)
     var cnt={OVERDUE:0,DUE:0,OK:0}; all.forEach(function(r){cnt[grp(r.status)]++;});
-    var FILT=[["all","All",""],["OVERDUE","Overdue","od"],["DUE","Due soon","ds"],["OK","Up to date","ok"]];
+    var FILT=[["all","All",""],["OVERDUE","Overdue","od"],["DUE","Upcoming","ds"],["OK","Complete","ok"]];
     var legend='<div class="olegend">'+FILT.map(function(s){
       var c=(s[0]=="all")?all.length:cnt[s[0]];
       var dot=s[2]?'<i style="background:var(--'+s[2]+')"></i>':'';
@@ -201,10 +201,10 @@ function renderOwner(){
     else{body='<div class="ointro">Your '+word+' care &mdash; last done, and when it&rsquo;s next due. Tap a status to filter.</div>'+legend+
       (items.length?'<div class="ogrid">'+items.map(function(r){
         var cls=r.status=="OVERDUE"?"od":(r.status=="DUE ≤30 DAYS"||r.status=="UPCOMING")?"ds":"ok";
-        var lbl=r.status=="OVERDUE"?"Overdue":(r.status=="DUE ≤30 DAYS"||r.status=="UPCOMING")?"Due soon":"Up to date";
+        var lbl=r.status=="OVERDUE"?"Overdue":(r.status=="DUE ≤30 DAYS"||r.status=="UPCOMING")?"Upcoming":"Complete";
         return '<div class="ocard '+cls+'"><span class="opill '+cls+'">'+lbl+'</span><div class="oi">'+esc(r.item)+'</div><div class="om">'+esc(r.sub)+'</div>'+
           '<div class="od2">Last done: '+(r.lastDone||"&mdash;")+' &middot; Next: '+(r.nextDue||"&mdash;")+'</div></div>';
-      }).join('')+'</div>':'<div class="oempty">Nothing '+(ownerStatus=="OVERDUE"?"overdue":ownerStatus=="DUE"?"due soon":"in that status")+' &mdash; nice.</div>');}
+      }).join('')+'</div>':'<div class="oempty">Nothing '+(ownerStatus=="OVERDUE"?"overdue":ownerStatus=="DUE"?"upcoming":"in that status")+' &mdash; nice.</div>');}
   }
   document.getElementById("ownerUI").innerHTML=
     '<div class="note" style="background:#eef4f9;border-color:#cfe0ee;color:#2c4a63">The care your yacht has received and what&rsquo;s coming up &mdash; from completed, invoiced work. Records to <b>'+(mv?fmtISO(mv.dataTo):'')+'</b>.</div>'+
